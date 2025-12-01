@@ -1,0 +1,143 @@
+import React, { useState, useEffect } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { TouchBackend } from 'react-dnd-touch-backend';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Components
+import FirstVisitModal from './components/onboarding/FirstVisitModal';
+import FloatingToolbar from './components/workspace/FloatingToolbar';
+import WorkspaceGuide from './components/workspace/WorkspaceGuide';
+import ComponentLibrary from './components/editor/ComponentLibrary';
+import PropertyPanel from './components/editor/PropertyPanel';
+
+// Hooks
+import useAutosave from './hooks/useAutosave';
+import useTutorial from './hooks/useTutorial';
+
+// Systems
+import ComponentRegistry from './core/systems/ComponentRegistry';
+import AnalyticsService from './core/systems/AnalyticsService';
+
+const isTouchDevice = () => 'ontouchstart' in window;
+
+function App() {
+  const [project, setProject] = useState(null);
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [isMobile, setIsMobile] = useState(isTouchDevice());
+
+  // Initialize systems
+  useEffect(() => {
+    // Check first visit
+    const hasVisited = localStorage.getItem('mocha_visited');
+    setShowOnboarding(!hasVisited);
+
+    // Initialize component registry
+    ComponentRegistry.initialize();
+
+    // Track app load
+    AnalyticsService.track('app_load', {
+      device_type: isMobile ? 'mobile' : 'desktop',
+      screen_size: `${window.innerWidth}x${window.innerHeight}`
+    });
+
+    // Handle resize
+    const handleResize = () => {
+      setIsMobile(isTouchDevice());
+    };
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Autosave hook
+  useAutosave(project);
+
+  // Tutorial hook
+  const { currentStep, nextStep } = useTutorial();
+
+  const handleTemplateSelect = (template) => {
+    setProject({
+      id: crypto.randomUUID(),
+      name: template.name,
+      template: template.id,
+      elements: template.elements,
+      createdAt: new Date().toISOString()
+    });
+    setShowOnboarding(false);
+    AnalyticsService.track('template_selected', { template: template.id });
+  };
+
+  const handleStartBlank = () => {
+    setProject({
+      id: crypto.randomUUID(),
+      name: 'Untitled Project',
+      template: 'blank',
+      elements: [],
+      createdAt: new Date().toISOString()
+    });
+    setShowOnboarding(false);
+    AnalyticsService.track('start_blank');
+  };
+
+  return (
+    <DndProvider backend={isMobile ? TouchBackend : HTML5Backend}>
+      <div className="app-container">
+        {/* Onboarding Modal */}
+        <AnimatePresence>
+          {showOnboarding && (
+            <FirstVisitModal
+              onTemplateSelect={handleTemplateSelect}
+              onStartBlank={handleStartBlank}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Main Layout */}
+        <div className="main-layout">
+          {/* Left Sidebar - Component Library */}
+          <aside className="sidebar left-sidebar">
+            <ComponentLibrary />
+          </aside>
+
+          {/* Main Workspace */}
+          <main className="workspace-area">
+            <WorkspaceGuide
+              project={project}
+              selectedElement={selectedElement}
+              onSelectElement={setSelectedElement}
+              tutorialStep={currentStep}
+            />
+            
+            {/* Floating Toolbar */}
+            <FloatingToolbar
+              onAddComponent={(type) => {
+                // Add component logic
+                nextStep();
+              }}
+              onSave={() => {
+                // Save logic
+              }}
+              onPreview={() => {
+                // Preview logic
+              }}
+            />
+          </main>
+
+          {/* Right Sidebar - Property Panel */}
+          <aside className="sidebar right-sidebar">
+            <PropertyPanel
+              element={selectedElement}
+              onUpdate={(updates) => {
+                // Update element logic
+              }}
+            />
+          </aside>
+        </div>
+      </div>
+    </DndProvider>
+  );
+}
+
+export default App;

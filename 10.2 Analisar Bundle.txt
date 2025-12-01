@@ -1,0 +1,6 @@
+# Instalar analisador
+npm install -g source-map-explorer
+
+# Build e analisar
+npm run build
+source-map-explorer dist/assets/*.js

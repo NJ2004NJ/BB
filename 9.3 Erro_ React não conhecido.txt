@@ -1,0 +1,2 @@
+// Adicionar ao início dos arquivos .jsx:
+import React from 'react';

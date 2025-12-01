@@ -1,0 +1,15 @@
+// Em qualquer componente que edita dados:
+import useAutosave from './hooks/useAutosave';
+
+function Editor() {
+  const [content, setContent] = useState('');
+  
+  // O hook gerencia autosave automaticamente
+  useAutosave({
+    id: 'project-123',
+    content: content,
+    lastModified: new Date()
+  });
+  
+  return <textarea onChange={(e) => setContent(e.target.value)} />;
+}

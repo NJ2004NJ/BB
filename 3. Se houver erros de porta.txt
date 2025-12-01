@@ -1,0 +1,7 @@
+# Lighthouse
+npm install -g lighthouse
+lighthouse http://localhost:5173 --view
+
+# Bundle analysis
+npm install -g source-map-explorer
+source-map-explorer dist/assets/*.js

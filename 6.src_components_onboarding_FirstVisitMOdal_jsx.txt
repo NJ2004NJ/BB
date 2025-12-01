@@ -1,0 +1,154 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Rocket, Sparkles, Layout, Code, Zap } from 'lucide-react';
+import TemplateCarousel from './TemplateCarousel';
+
+const userTypes = [
+  {
+    id: 'beginner',
+    icon: <Rocket className="w-6 h-6" />,
+    title: 'Beginner',
+    description: 'Pre-built templates, guided experience',
+    color: 'from-blue-500 to-cyan-400'
+  },
+  {
+    id: 'designer',
+    icon: <Layout className="w-6 h-6" />,
+    title: 'Designer',
+    description: 'Visual controls, design-focused',
+    color: 'from-purple-500 to-pink-400'
+  },
+  {
+    id: 'developer',
+    icon: <Code className="w-6 h-6" />,
+    title: 'Developer',
+    description: 'Code export, advanced controls',
+    color: 'from-green-500 to-emerald-400'
+  },
+  {
+    id: 'business',
+    icon: <Zap className="w-6 h-6" />,
+    title: 'Business',
+    description: 'Quick solutions, no-code needed',
+    color: 'from-orange-500 to-red-400'
+  }
+];
+
+const templates = {
+  beginner: [
+    { id: 'landing', name: 'Landing Page', category: 'Marketing' },
+    { id: 'portfolio', name: 'Portfolio', category: 'Personal' },
+    { id: 'blog', name: 'Blog', category: 'Content' }
+  ],
+  designer: [
+    { id: 'agency', name: 'Agency Website', category: 'Business' },
+    { id: 'dashboard', name: 'Admin Dashboard', category: 'Tools' },
+    { id: 'ecommerce', name: 'E-commerce', category: 'Store' }
+  ],
+  developer: [
+    { id: 'saas', name: 'SAAS App', category: 'Application' },
+    { id: 'api-docs', name: 'API Documentation', category: 'Technical' },
+    { id: 'realtime', name: 'Real-time App', category: 'Interactive' }
+  ],
+  business: [
+    { id: 'coming-soon', name: 'Coming Soon', category: 'Marketing' },
+    { id: 'contact', name: 'Contact Form', category: 'Lead Generation' },
+    { id: 'pricing', name: 'Pricing Page', category: 'Sales' }
+  ]
+};
+
+export default function FirstVisitModal({ onTemplateSelect, onStartBlank }) {
+  const [selectedUserType, setSelectedUserType] = useState(null);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const handleUserTypeSelect = (type) => {
+    setSelectedUserType(type);
+    setShowTemplates(true);
+    localStorage.setItem('mocha_user_type', type);
+  };
+
+  const handleSkip = () => {
+    onStartBlank();
+    localStorage.setItem('mocha_visited', 'true');
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        className="relative w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl mb-4">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              What do you want to build?
+            </h1>
+            <p className="text-gray-600">
+              Choose your path and we'll help you get started
+            </p>
+          </div>
+
+          {!showTemplates ? (
+            /* User Type Selection */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {userTypes.map((type) => (
+                <motion.button
+                  key={type.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleUserTypeSelect(type.id)}
+                  className={`relative p-6 bg-gradient-to-br ${type.color} rounded-xl text-white text-left transition-all hover:shadow-xl`}
+                >
+                  <div className="mb-4">{type.icon}</div>
+                  <h3 className="text-xl font-semibold mb-2">{type.title}</h3>
+                  <p className="text-sm opacity-90">{type.description}</p>
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    →
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          ) : (
+            /* Template Selection */
+            <div>
+              <button
+                onClick={() => setShowTemplates(false)}
+                className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+              >
+                ← Back to user types
+              </button>
+              
+              <TemplateCarousel
+                templates={templates[selectedUserType]}
+                onSelect={onTemplateSelect}
+              />
+            </div>
+          )}
+
+          {/* Skip Option */}
+          <div className="text-center pt-6 border-t">
+            <button
+              onClick={handleSkip}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              I know what I'm doing, start from scratch
+            </button>
+            <p className="text-sm text-gray-400 mt-2">
+              You can always change templates later
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

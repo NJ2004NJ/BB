@@ -1,0 +1,12 @@
+# 1. Criar estrutura
+mkdir projeto && cd projeto
+
+# 2. Instalar pacotes ESSENCIAIS
+npm install react react-dom vite @vitejs/plugin-react
+
+# 3. Criar arquivos mínimos
+echo '<div id="root"></div>' > index.html
+echo 'console.log("Hello")' > src/main.jsx
+
+# 4. Rodar
+npm run dev

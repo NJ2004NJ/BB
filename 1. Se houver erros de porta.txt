@@ -1,0 +1,9 @@
+# Se houver erros de porta
+sudo lsof -ti:5173 | xargs kill -9
+
+# Limpar cache
+rm -rf node_modules package-lock.json
+npm install
+
+# Build errors
+npm run build -- --force

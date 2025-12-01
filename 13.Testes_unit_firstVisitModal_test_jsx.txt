@@ -1,0 +1,96 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import FirstVisitModal from '../../src/components/onboarding/FirstVisitModal';
+
+describe('FirstVisitModal', () => {
+  const mockOnTemplateSelect = vi.fn();
+  const mockOnStartBlank = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it('renders all user type options', () => {
+    render(
+      <FirstVisitModal
+        onTemplateSelect={mockOnTemplateSelect}
+        onStartBlank={mockOnStartBlank}
+      />
+    );
+
+    expect(screen.getByText('Beginner')).toBeInTheDocument();
+    expect(screen.getByText('Designer')).toBeInTheDocument();
+    expect(screen.getByText('Developer')).toBeInTheDocument();
+    expect(screen.getByText('Business')).toBeInTheDocument();
+  });
+
+  it('shows templates when user type is selected', async () => {
+    render(
+      <FirstVisitModal
+        onTemplateSelect={mockOnTemplateSelect}
+        onStartBlank={mockOnStartBlank}
+      />
+    );
+
+    // Click on Beginner option
+    fireEvent.click(screen.getByText('Beginner'));
+
+    // Should show templates
+    await waitFor(() => {
+      expect(screen.getByText('Landing Page')).toBeInTheDocument();
+      expect(screen.getByText('Portfolio')).toBeInTheDocument();
+      expect(screen.getByText('Blog')).toBeInTheDocument();
+    });
+  });
+
+  it('calls onTemplateSelect when template is clicked', async () => {
+    render(
+      <FirstVisitModal
+        onTemplateSelect={mockOnTemplateSelect}
+        onStartBlank={mockOnStartBlank}
+      />
+    );
+
+    // Select user type and template
+    fireEvent.click(screen.getByText('Beginner'));
+    
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('Landing Page'));
+    });
+
+    expect(mockOnTemplateSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'landing',
+        name: 'Landing Page'
+      })
+    );
+  });
+
+  it('calls onStartBlank when skip is clicked', () => {
+    render(
+      <FirstVisitModal
+        onTemplateSelect={mockOnTemplateSelect}
+        onStartBlank={mockOnStartBlank}
+      />
+    );
+
+    fireEvent.click(screen.getByText(/start from scratch/i));
+    expect(mockOnStartBlank).toHaveBeenCalled();
+  });
+
+  it('saves user type to localStorage', async () => {
+    render(
+      <FirstVisitModal
+        onTemplateSelect={mockOnTemplateSelect}
+        onStartBlank={mockOnStartBlank}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Designer'));
+    
+    await waitFor(() => {
+      expect(localStorage.getItem('mocha_user_type')).toBe('designer');
+    });
+  });
+});

@@ -1,0 +1,11 @@
+# Inicializar npm
+npm init -y
+
+# Instalar dependências PRINCIPAIS (copiar e colar)
+npm install react react-dom react-dnd react-dnd-html5-backend framer-motion lucide-react uuid localforage html2canvas dexie workbox debounce match-sorter react-hotkeys-hook react-resizable-panels react-tourist fuse.js
+
+# Instalar dependências de DESENVOLVIMENTO
+npm install -D @vitejs/plugin-react vite vitest @testing-library/react @testing-library/jest-dom eslint eslint-plugin-react eslint-plugin-react-hooks prettier autoprefixer tailwindcss postcss
+
+# OU tudo de uma vez (copie este bloco inteiro):
+npm install react react-dom react-dnd react-dnd-html5-backend framer-motion lucide-react uuid localforage html2canvas dexie workbox debounce match-sorter react-hotkeys-hook react-resizable-panels react-tourist fuse.js @vitejs/plugin-react vite vitest @testing-library/react @testing-library/jest-dom eslint eslint-plugin-react eslint-plugin-react-hooks prettier autoprefixer tailwindcss postcss

@@ -1,0 +1,167 @@
+import localforage from 'localforage';
+import { debounce } from 'debounce';
+
+class AutosaveManager {
+  constructor() {
+    this.projectId = null;
+    this.lastSave = null;
+    this.changes = [];
+    this.isSaving = false;
+    
+    // Configure localforage
+    localforage.config({
+      name: 'mocha-apps',
+      storeName: 'autosaves'
+    });
+    
+    // Setup beforeunload warning
+    window.addEventListener('beforeunload', this.handleBeforeUnload.bind(this));
+  }
+
+  initialize(projectId) {
+    this.projectId = projectId;
+    this.loadAutoSave();
+  }
+
+  async save(projectData, immediate = false) {
+    if (!this.projectId) return;
+    
+    this.changes.push({
+      timestamp: Date.now(),
+      data: projectData
+    });
+
+    if (immediate) {
+      await this.performSave();
+    } else {
+      this.debouncedSave();
+    }
+  }
+
+  debouncedSave = debounce(async () => {
+    await this.performSave();
+  }, 2000);
+
+  async performSave() {
+    if (this.isSaving || !this.projectId) return;
+    
+    this.isSaving = true;
+    
+    try {
+      const saveData = {
+        projectId: this.projectId,
+        timestamp: Date.now(),
+        changes: this.changes,
+        snapshot: await this.generateSnapshot()
+      };
+
+      await localforage.setItem(`autosave_${this.projectId}`, saveData);
+      
+      // Also save to server if online
+      if (navigator.onLine) {
+        await this.syncWithServer(saveData);
+      }
+      
+      this.lastSave = Date.now();
+      this.changes = [];
+      
+      this.dispatchSaveEvent('saved');
+    } catch (error) {
+      console.error('Autosave failed:', error);
+      this.dispatchSaveEvent('error', error);
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  async loadAutoSave() {
+    if (!this.projectId) return null;
+    
+    try {
+      const saved = await localforage.getItem(`autosave_${this.projectId}`);
+      if (saved) {
+        this.lastSave = saved.timestamp;
+        return saved;
+      }
+    } catch (error) {
+      console.error('Failed to load autosave:', error);
+    }
+    
+    return null;
+  }
+
+  async generateSnapshot() {
+    try {
+      // Generate a preview image of the current canvas
+      const canvas = document.querySelector('.workspace-canvas');
+      if (!canvas) return null;
+      
+      // In a real implementation, use html2canvas or similar
+      return {
+        width: canvas.offsetWidth,
+        height: canvas.offsetHeight,
+        elementCount: document.querySelectorAll('.workspace-element').length
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async syncWithServer(data) {
+    try {
+      const response = await fetch('/api/autosave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) throw new Error('Server sync failed');
+      
+      return await response.json();
+    } catch (error) {
+      // Queue for retry later
+      this.queueForRetry(data);
+    }
+  }
+
+  queueForRetry(data) {
+    const pending = JSON.parse(localStorage.getItem('pending_syncs') || '[]');
+    pending.push({ data, timestamp: Date.now() });
+    localStorage.setItem('pending_syncs', JSON.stringify(pending.slice(-10))); // Keep last 10
+  }
+
+  handleBeforeUnload(event) {
+    if (this.changes.length > 0) {
+      event.preventDefault();
+      event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      this.performSave(); // Force immediate save
+    }
+  }
+
+  dispatchSaveEvent(status, data = null) {
+    const event = new CustomEvent('autosave', {
+      detail: { status, timestamp: Date.now(), data }
+    });
+    window.dispatchEvent(event);
+  }
+
+  getSaveStatus() {
+    return {
+      lastSave: this.lastSave,
+      pendingChanges: this.changes.length,
+      isSaving: this.isSaving
+    };
+  }
+
+  clear() {
+    if (this.projectId) {
+      localforage.removeItem(`autosave_${this.projectId}`);
+    }
+    this.projectId = null;
+    this.lastSave = null;
+    this.changes = [];
+  }
+}
+
+// Singleton instance
+export default new AutosaveManager();

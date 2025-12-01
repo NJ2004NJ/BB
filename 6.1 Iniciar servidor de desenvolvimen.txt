@@ -1,0 +1,5 @@
+# Iniciar servidor de desenvolvimento
+npm run dev
+
+# Abrirá em: http://localhost:5173
+# Qualquer mudança no código atualiza automaticamente

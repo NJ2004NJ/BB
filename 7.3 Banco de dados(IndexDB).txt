@@ -1,0 +1,11 @@
+import db from './services/storage/IndexedDB';
+
+// Salvar projeto
+await db.saveProject({
+  name: 'Meu App',
+  elements: [...],
+  settings: {...}
+});
+
+// Buscar projetos
+const projects = await db.listProjects();

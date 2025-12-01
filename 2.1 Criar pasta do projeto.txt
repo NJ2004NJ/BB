@@ -1,0 +1,8 @@
+bash
+# Verificar se Node.js está instalado
+node --version  # Deve mostrar 18.x ou superior
+
+# Verificar npm
+npm --version   # Deve mostrar 9.x ou superior
+
+# Se não tiver Node.js, baixe em: https://nodejs.org

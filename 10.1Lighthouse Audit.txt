@@ -1,0 +1,5 @@
+# Instalar globalmente
+npm install -g lighthouse
+
+# Executar auditoria
+lighthouse http://localhost:5173 --view

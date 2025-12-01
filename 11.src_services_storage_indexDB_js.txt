@@ -1,0 +1,172 @@
+import Dexie from 'dexie';
+
+class MochaDatabase extends Dexie {
+  constructor() {
+    super('MochaAppBuilder');
+    
+    this.version(1).stores({
+      projects: '++id, name, updatedAt, isTemplate',
+      components: '++id, name, category, tags',
+      autosaves: 'projectId, timestamp',
+      userSettings: 'key'
+    });
+    
+    this.version(2).stores({
+      projects: '++id, name, updatedAt, isTemplate, userId',
+      components: '++id, name, category, tags, isPublic',
+      autosaves: 'projectId, timestamp, userId',
+      userSettings: 'key',
+      templates: '++id, name, category, downloads'
+    }).upgrade(tx => {
+      // Migration logic
+    });
+    
+    this.projects = this.table('projects');
+    this.components = this.table('components');
+    this.autosaves = this.table('autosaves');
+    this.userSettings = this.table('userSettings');
+    this.templates = this.table('templates');
+  }
+
+  // Project methods
+  async saveProject(project) {
+    project.updatedAt = new Date();
+    if (project.id) {
+      return await this.projects.update(project.id, project);
+    } else {
+      project.createdAt = new Date();
+      project.id = await this.projects.add(project);
+      return project.id;
+    }
+  }
+
+  async getProject(id) {
+    return await this.projects.get(id);
+  }
+
+  async listProjects(options = {}) {
+    let query = this.projects;
+    
+    if (options.userId) {
+      query = query.where('userId').equals(options.userId);
+    }
+    
+    if (options.isTemplate !== undefined) {
+      query = query.where('isTemplate').equals(options.isTemplate);
+    }
+    
+    return await query.reverse().sortBy('updatedAt');
+  }
+
+  // Component methods
+  async saveComponent(component) {
+    if (component.id) {
+      return await this.components.update(component.id, component);
+    } else {
+      component.id = await this.components.add(component);
+      return component.id;
+    }
+  }
+
+  async searchComponents(query, category = null) {
+    let collection = this.components;
+    
+    if (category) {
+      collection = collection.where('category').equals(category);
+    }
+    
+    if (query) {
+      return await collection
+        .filter(component => 
+          component.name.toLowerCase().includes(query.toLowerCase()) ||
+          component.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+        )
+        .toArray();
+    }
+    
+    return await collection.toArray();
+  }
+
+  // Autosave methods
+  async saveAutosave(autosave) {
+    return await this.autosaves.put(autosave);
+  }
+
+  async getLatestAutosave(projectId) {
+    return await this.autosaves
+      .where('projectId')
+      .equals(projectId)
+      .reverse()
+      .sortBy('timestamp')
+      .then(results => results[0]);
+  }
+
+  // Settings methods
+  async getSetting(key, defaultValue = null) {
+    const setting = await this.userSettings.get(key);
+    return setting ? setting.value : defaultValue;
+  }
+
+  async setSetting(key, value) {
+    return await this.userSettings.put({ key, value, updatedAt: new Date() });
+  }
+
+  // Backup and restore
+  async exportData() {
+    const data = {
+      projects: await this.projects.toArray(),
+      components: await this.components.toArray(),
+      settings: await this.userSettings.toArray(),
+      exportDate: new Date().toISOString()
+    };
+    
+    return JSON.stringify(data, null, 2);
+  }
+
+  async importData(jsonString) {
+    const data = JSON.parse(jsonString);
+    const tx = this.transaction(
+      ['projects', 'components', 'userSettings'],
+      'readwrite'
+    );
+    
+    await Promise.all([
+      tx.table('projects').bulkPut(data.projects || []),
+      tx.table('components').bulkPut(data.components || []),
+      tx.table('userSettings').bulkPut(data.settings || [])
+    ]);
+    
+    await tx.done;
+  }
+
+  // Analytics
+  async getStats() {
+    const [projectCount, componentCount, templateCount] = await Promise.all([
+      this.projects.count(),
+      this.components.count(),
+      this.templates.count()
+    ]);
+    
+    return {
+      projectCount,
+      componentCount,
+      templateCount,
+      storageUsage: await this.getStorageUsage()
+    };
+  }
+
+  async getStorageUsage() {
+    if (navigator.storage && navigator.storage.estimate) {
+      const estimate = await navigator.storage.estimate();
+      return {
+        usage: estimate.usage,
+        quota: estimate.quota,
+        percentage: (estimate.usage / estimate.quota * 100).toFixed(2)
+      };
+    }
+    return null;
+  }
+}
+
+// Singleton instance
+export default new MochaDatabase();

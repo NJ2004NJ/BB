@@ -1,0 +1,23 @@
+// Em seu componente principal:
+import FirstVisitModal from './components/onboarding/FirstVisitModal';
+
+function App() {
+  const [showModal, setShowModal] = useState(true);
+  
+  return (
+    <>
+      {showModal && (
+        <FirstVisitModal
+          onTemplateSelect={(template) => {
+            console.log('Template selecionado:', template);
+            setShowModal(false);
+          }}
+          onStartBlank={() => {
+            console.log('Começar do zero');
+            setShowModal(false);
+          }}
+        />
+      )}
+    </>
+  );
+}

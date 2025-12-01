@@ -1,0 +1,25 @@
+const fs = require('fs');
+const path = require('path');
+
+// Estrutura de arquivos (simplificada para exemplo)
+const files = {
+  'package.json': `{"name":"mocha-app-builder","version":"1.0.0","scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"dependencies":{"react":"^18.2.0","react-dom":"^18.2.0"},"devDependencies":{"@vitejs/plugin-react":"^4.0.0","vite":"^4.4.0"}}`,
+  'index.html': `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Mocha App Builder</title></head><body><div id="root"></div><script type="module" src="/src/index.js"></script></body></html>`,
+  'src/App.jsx': `import React from 'react';\n\nexport default function App() {\n  return (\n    <div>\n      <h1>Mocha App Builder</h1>\n      <p>Starting...</p>\n    </div>\n  );\n}`,
+  'src/index.js': `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from './App';\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(<App />);`
+};
+
+// Criar arquivos
+Object.entries(files).forEach(([filePath, content]) => {
+  const fullPath = path.join(__dirname, filePath);
+  const dir = path.dirname(fullPath);
+  
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  
+  fs.writeFileSync(fullPath, content);
+  console.log(`Created: ${filePath}`);
+});
+
+console.log('Setup complete! Run: npm install && npm run dev');

@@ -1,0 +1,19 @@
+# 1. Clonar e instalar
+git clone [repo-url]
+cd mocha-app-builder
+npm install
+
+# 2. Ambiente de desenvolvimento
+npm run dev
+# Abre em http://localhost:5173
+
+# 3. Build para produção
+npm run build
+
+# 4. Testes
+npm test
+npm run test:ui  # Interface visual de testes
+
+# 5. Lint e formatação
+npm run lint
+npm run format

@@ -1,0 +1,6 @@
+# Criar versão otimizada
+npm run build
+
+# Os arquivos ficam na pasta "dist/"
+# Para testar a build:
+npm run preview

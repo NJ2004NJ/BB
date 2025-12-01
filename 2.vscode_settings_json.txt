@@ -1,0 +1,25 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  "files.autoSave": "afterDelay",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "workbench.colorTheme": "Default Dark Modern",
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact"
+  ],
+  "tailwindCSS.includeLanguages": {
+    "javascript": "javascript",
+    "javascriptreact": "javascriptreact"
+  },
+  "liveServer.settings.port": 5173,
+  "git.autofetch": true
+}

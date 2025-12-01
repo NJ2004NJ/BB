@@ -1,0 +1,5 @@
+# Lista de IDs das extensões
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+code --install-extension bradlc.vscode-tailwindcss
+code --install-extension formulahendry.auto-rename-tag

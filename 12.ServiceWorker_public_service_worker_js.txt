@@ -1,0 +1,170 @@
+const CACHE_NAME = 'mocha-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/assets/logo.svg'
+];
+
+const API_CACHE_NAME = 'mocha-api-v1';
+const API_ENDPOINTS = [
+  '/api/templates',
+  '/api/components'
+];
+
+// Install event
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Caching app shell');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .then(() => self.skipWaiting())
+  );
+});
+
+// Activate event
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Fetch event with network-first for API, cache-first for assets
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // API requests (network-first)
+  if (API_ENDPOINTS.some(endpoint => url.pathname.startsWith(endpoint))) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Cache successful responses
+          if (response.ok) {
+            const clonedResponse = response.clone();
+            caches.open(API_CACHE_NAME)
+              .then(cache => cache.put(event.request, clonedResponse));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+  
+  // Static assets (cache-first)
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          
+          return fetch(event.request)
+            .then(response => {
+              // Don't cache if not a successful response
+              if (!response.ok) {
+                return response;
+              }
+              
+              // Cache the new response
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(event.request, responseToCache));
+              
+              return response;
+            });
+        })
+    );
+  }
+});
+
+// Background sync for offline saves
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-autosaves') {
+    event.waitUntil(syncAutosaves());
+  }
+});
+
+async function syncAutosaves() {
+  try {
+    const pendingSaves = await getPendingSaves();
+    
+    for (const save of pendingSaves) {
+      const response = await fetch('/api/autosave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(save)
+      });
+      
+      if (response.ok) {
+        await removePendingSave(save.id);
+      }
+    }
+  } catch (error) {
+    console.error('Background sync failed:', error);
+  }
+}
+
+async function getPendingSaves() {
+  const cache = await caches.open('pending-saves');
+  const keys = await cache.keys();
+  const saves = await Promise.all(
+    keys.map(async key => {
+      const response = await cache.match(key);
+      return response ? response.json() : null;
+    })
+  );
+  return saves.filter(Boolean);
+}
+
+// Push notifications
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  
+  const options = {
+    body: data.body || 'Your app has been updated',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/badge-72.png',
+    tag: 'mocha-update',
+    data: {
+      url: data.url || '/'
+    }
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification('Mocha App Builder', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window' })
+      .then(clientList => {
+        for (const client of clientList) {
+          if (client.url === event.notification.data.url && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(event.notification.data.url);
+        }
+      })
+  );
+});

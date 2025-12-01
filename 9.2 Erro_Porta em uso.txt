@@ -1,0 +1,6 @@
+# Windows
+netstat -ano | findstr :5173
+taskkill /PID [PID] /F
+
+# Linux/Mac
+lsof -ti:5173 | xargs kill -9

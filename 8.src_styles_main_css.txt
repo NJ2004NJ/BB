@@ -1,0 +1,214 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  :root {
+    --primary: #0070f3;
+    --secondary: #7928ca;
+    --success: #17c964;
+    --warning: #f5a524;
+    --danger: #f31260;
+    --background: #ffffff;
+    --foreground: #000000;
+  }
+
+  .dark {
+    --primary: #3291ff;
+    --secondary: #8a63d2;
+    --background: #000000;
+    --foreground: #ffffff;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    overflow: hidden;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+}
+
+@layer components {
+  .app-container {
+    @apply h-screen flex flex-col;
+  }
+
+  .main-layout {
+    @apply flex flex-1 overflow-hidden;
+  }
+
+  .sidebar {
+    @apply w-64 bg-white/90 backdrop-blur-sm border-r border-gray-200 overflow-y-auto;
+    transition: width 0.2s ease;
+  }
+
+  .sidebar.collapsed {
+    @apply w-16;
+  }
+
+  .workspace-area {
+    @apply flex-1 relative overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100;
+  }
+
+  .floating-toolbar {
+    @apply fixed bottom-6 left-1/2 transform -translate-x-1/2 
+           bg-white/95 backdrop-blur-md rounded-full 
+           shadow-2xl border border-gray-200 
+           flex items-center gap-2 p-2 z-40;
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .component-card {
+    @apply bg-white rounded-lg border border-gray-200 
+           p-3 cursor-move transition-all 
+           hover:shadow-md hover:border-blue-300 
+           active:scale-95;
+  }
+
+  .drop-zone {
+    @apply border-2 border-dashed border-gray-300 
+           rounded-lg p-4 transition-all 
+           hover:border-blue-400 hover:bg-blue-50/50;
+  }
+
+  .drop-zone.active {
+    @apply border-blue-500 bg-blue-100/30 border-solid;
+  }
+
+  .workspace-grid {
+    background-size: 20px 20px;
+    background-image: 
+      linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+      linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+  }
+
+  .hint-bubble {
+    @apply absolute bg-white rounded-lg p-3 shadow-lg 
+           border border-gray-200 z-30 max-w-xs 
+           animate-pulse-slow;
+  }
+
+  .hint-arrow {
+    @apply absolute w-3 h-3 bg-white transform rotate-45 
+           border-t border-l border-gray-200;
+  }
+}
+
+@layer utilities {
+  .drag-preview {
+    opacity: 0.8;
+    transform: rotate(5deg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .resize-handle {
+    @apply absolute w-2 h-2 bg-blue-500 rounded-full 
+           border-2 border-white shadow;
+  }
+
+  .resize-handle:hover {
+    @apply bg-blue-600 scale-150;
+  }
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Selection styles */
+::selection {
+  @apply bg-blue-500/30 text-blue-900;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .sidebar {
+    @apply w-full absolute inset-y-0 z-50 
+           transform transition-transform duration-300;
+  }
+  
+  .sidebar.left-sidebar {
+    @apply -translate-x-full;
+  }
+  
+  .sidebar.left-sidebar.open {
+    @apply translate-x-0;
+  }
+  
+  .sidebar.right-sidebar {
+    @apply translate-x-full right-0;
+  }
+  
+  .sidebar.right-sidebar.open {
+    @apply translate-x-0;
+  }
+  
+  .floating-toolbar {
+    @apply bottom-4 w-[90vw] max-w-md;
+  }
+}
